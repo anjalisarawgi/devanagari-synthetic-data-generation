@@ -108,6 +108,45 @@ def add_random_scribbles(img, circle_count=10, line_count=5, max_radius=5):
 
     return img
 
+def elastic_transform(image, alpha=36, sigma=4, random_state=None):
+    """
+    Performs an elastic distortion on a grayscale image.
+    :param image: Grayscale (H x W) numpy array.
+    :param alpha: Scaling factor that controls how far pixels are moved.
+    :param sigma: Standard deviation for Gaussian smoothing of the displacement fields.
+    :param random_state: Optional np.random.RandomState for reproducibility.
+    :return: Distorted image (same shape as input).
+    """
+    if random_state is None:
+        random_state = np.random.RandomState(None)
+    
+    # Store shape
+    h, w = image.shape[:2]
+    
+    # Generate random displacement fields (dx, dy) in the range [-1, 1]
+    dx = random_state.rand(h, w) * 2 - 1  # [-1..1]
+    dy = random_state.rand(h, w) * 2 - 1  # [-1..1]
+    
+    # Smooth them with a Gaussian filter (cv2.GaussianBlur or manual)
+    # This ensures the displacement is coherent (smooth) rather than pixel-by-pixel noise
+    dx = cv2.GaussianBlur(dx, (0, 0), sigmaX=sigma, borderType=cv2.BORDER_REFLECT101)
+    dy = cv2.GaussianBlur(dy, (0, 0), sigmaX=sigma, borderType=cv2.BORDER_REFLECT101)
+    
+    # Scale the displacement fields
+    dx *= alpha
+    dy *= alpha
+    
+    # Build a meshgrid of (x, y) coordinates
+    x, y = np.meshgrid(np.arange(w), np.arange(h))
+    
+    # Distort the coordinates
+    map_x = (x + dx).astype(np.float32)
+    map_y = (y + dy).astype(np.float32)
+    
+    # Remap the original image to the new coordinates
+    distorted = cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT101)
+    return distorted
+
 def handwritten_effect_pipeline(input_path, output_path):
     # 1. Load image in grayscale
     img = cv2.imread(input_path, cv2.IMREAD_GRAYSCALE)
@@ -124,6 +163,7 @@ def handwritten_effect_pipeline(input_path, output_path):
 
     # 4. Apply a random perspective transform
     warped = random_perspective_transform(img_bin, max_shift=0.03)
+    warped = elastic_transform(warped, alpha=40, sigma=5)
 
     # 5. Apply local morphological transformations to vary thickness in patches
     warped = random_local_morphological_effect(warped, kernel_size=3, iterations=1, patch_count=5)
@@ -148,6 +188,6 @@ def handwritten_effect_pipeline(input_path, output_path):
     print(f"Saved handwritten-style output to {output_path}")
 
 if __name__ == "__main__":
-    input_image_path = "10003.png"     # Replace with your input
-    output_image_path = "handwritten_10003.png"   # Replace with your desired output
+    input_image_path = "data/original/10002.png"     # Replace with your input
+    output_image_path = "handwritten_10002.png"   # Replace with your desired output
     handwritten_effect_pipeline(input_image_path, output_image_path)
