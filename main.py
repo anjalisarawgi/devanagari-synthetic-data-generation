@@ -38,6 +38,55 @@ def random_perspective_transform(img, max_shift=0.02):
                                  borderMode=cv2.BORDER_REPLICATE)
     return warped
 
+
+def add_paper_texture(text_img, texture_img, alpha=0.2):
+    """
+    Blend text_img onto texture_img to simulate paper texture.
+    :param text_img: (H x W) final text image (uint8).
+    :param texture_img: (H x W) paper texture image (uint8).
+    :param alpha: blending factor for text overlay.
+    :return: Blended image (uint8).
+    """
+    # Ensure both images are same size
+    h, w = text_img.shape[:2]
+    texture_resized = cv2.resize(texture_img, (w, h))
+
+    # Convert to float for blending
+    text_float = text_img.astype(np.float32)
+    texture_float = texture_resized.astype(np.float32)
+
+    # Normalize texture if desired to keep background from overshadowing text
+    texture_norm = cv2.normalize(texture_float, None, 0, 255, cv2.NORM_MINMAX)
+
+    # Blend: final = (1 - alpha)*texture + alpha*text
+    blended = (1 - alpha) * texture_norm + alpha * text_float
+    blended = np.clip(blended, 0, 255).astype(np.uint8)
+    return blended
+
+def add_paper_texture(text_img, texture_img, alpha=0.2):
+    """
+    Blend text_img onto texture_img to simulate paper texture.
+    :param text_img: (H x W) final text image (uint8).
+    :param texture_img: (H x W) paper texture image (uint8).
+    :param alpha: blending factor for text overlay.
+    :return: Blended image (uint8).
+    """
+    # Ensure both images are same size
+    h, w = text_img.shape[:2]
+    texture_resized = cv2.resize(texture_img, (w, h))
+
+    # Convert to float for blending
+    text_float = text_img.astype(np.float32)
+    texture_float = texture_resized.astype(np.float32)
+
+    # Normalize texture if desired to keep background from overshadowing text
+    texture_norm = cv2.normalize(texture_float, None, 0, 255, cv2.NORM_MINMAX)
+
+    # Blend: final = (1 - alpha)*texture + alpha*text
+    blended = (1 - alpha) * texture_norm + alpha * text_float
+    blended = np.clip(blended, 0, 255).astype(np.uint8)
+    return blended
+
 def random_local_morphological_effect(img, kernel_size=3, iterations=1, patch_count=5):
     h, w = img.shape[:2]
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
@@ -147,6 +196,24 @@ def elastic_transform(image, alpha=36, sigma=4, random_state=None):
     distorted = cv2.remap(image, map_x, map_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT101)
     return distorted
 
+def ink_bleed_effect(img, blur_ksize=3, intensity=0.5):
+    """
+    Simulates slight ink bleed by merging a blurred version with the original.
+    :param img: Binary or near-binary text image (uint8).
+    :param blur_ksize: Kernel size for blurring.
+    :param intensity: How strongly to blend the blurred edges.
+    :return: Modified image.
+    """
+    # Convert to float for blending
+    img_float = img.astype(np.float32)
+    blurred = cv2.GaussianBlur(img_float, (blur_ksize, blur_ksize), 0)
+
+    # Weighted sum: new = (1 - intensity)*original + intensity*blurred
+    out = (1 - intensity) * img_float + intensity * blurred
+    out = np.clip(out, 0, 255).astype(np.uint8)
+
+    return out
+
 def handwritten_effect_pipeline(input_path, output_path):
     # 1. Load image in grayscale
     img = cv2.imread(input_path, cv2.IMREAD_GRAYSCALE)
@@ -171,8 +238,10 @@ def handwritten_effect_pipeline(input_path, output_path):
     # 6. Add random scribbles (like stray pen marks)
     warped = add_random_scribbles(warped, circle_count=10, line_count=5, max_radius=4)
 
+    ink_bleed = ink_bleed_effect(warped, blur_ksize=3, intensity=0.5)
+
     # 7. Add random noise
-    noisy = add_random_noise(warped, noise_level=30)
+    noisy = add_random_noise(ink_bleed, noise_level=30)
 
     # 8. Slight blur
     blurred = cv2.GaussianBlur(noisy, (3, 3), 0)
@@ -184,10 +253,12 @@ def handwritten_effect_pipeline(input_path, output_path):
     # _, final = cv2.threshold(final, 128, 255, cv2.THRESH_BINARY)
 
     # 11. Save result
-    cv2.imwrite(output_path, final)
+    paper_texture = cv2.imread("paper_texture_scripts.jpg", cv2.IMREAD_GRAYSCALE)
+    final_with_texture = add_paper_texture(final, paper_texture, alpha=0.8)
+    cv2.imwrite(output_path, final_with_texture)
     print(f"Saved handwritten-style output to {output_path}")
 
 if __name__ == "__main__":
-    input_image_path = "data/original/10002.png"     # Replace with your input
-    output_image_path = "handwritten_10002.png"   # Replace with your desired output
+    input_image_path = "data/original/10003.png"     # Replace with your input
+    output_image_path = "handwritten_10003.png"   # Replace with your desired output
     handwritten_effect_pipeline(input_image_path, output_image_path)
