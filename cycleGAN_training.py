@@ -116,9 +116,9 @@ class ImageDataset(Dataset):
 #  Training Loop
 # -------------------------
 
-def train_cycle_gan(dataset_A, dataset_B, num_epochs=100, batch_size=1, lr=0.0002):
-    dataloader_A = DataLoader(dataset_A, batch_size=batch_size, shuffle=True)
-    dataloader_B = DataLoader(dataset_B, batch_size=batch_size, shuffle=True)
+def train_cycle_gan(dataset_A, dataset_B, num_epochs=300, batch_size=1, lr=0.0002):
+    # dataloader_A = DataLoader(dataset_A, batch_size=batch_size, shuffle=True)
+    # dataloader_B = DataLoader(dataset_B, batch_size=batch_size, shuffle=True)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
@@ -132,6 +132,24 @@ def train_cycle_gan(dataset_A, dataset_B, num_epochs=100, batch_size=1, lr=0.000
     optimizer_G = optim.Adam(list(G_AB.parameters()) + list(G_BA.parameters()), lr=lr, betas=(0.5, 0.999))
     optimizer_D_A = optim.Adam(D_A.parameters(), lr=lr, betas=(0.5, 0.999))
     optimizer_D_B = optim.Adam(D_B.parameters(), lr=lr, betas=(0.5, 0.999))
+
+    # -----------------------------
+    #  Define the LR schedulers
+    # -----------------------------
+    # Keep LR constant for first half (125 epochs), then linearly decay to 0 for second half.
+    def lambda_rule(epoch):
+        start_decay_epoch = 125
+        total_decay_epochs = 125  # from epoch 125 to 249 (inclusive)
+        if epoch < start_decay_epoch:
+            return 1.0
+        else:
+            # e.g. epoch=125 => factor=1, epoch=249 => factor~0
+            return 1.0 - float(epoch - start_decay_epoch) / float(total_decay_epochs)
+
+    scheduler_G = optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=lambda_rule)
+    scheduler_D_A = optim.lr_scheduler.LambdaLR(optimizer_D_A, lr_lambda=lambda_rule)
+    scheduler_D_B = optim.lr_scheduler.LambdaLR(optimizer_D_B, lr_lambda=lambda_rule)
+
     
     # Loss functions
     criterion_GAN = nn.MSELoss()
@@ -198,8 +216,15 @@ def train_cycle_gan(dataset_A, dataset_B, num_epochs=100, batch_size=1, lr=0.000
                   f"[D_A: {loss_D_A.item():.4f}] [D_B: {loss_D_B.item():.4f}] "
                   f"[G: {loss_G.item():.4f}]")
         
+        # -----------------------
+        #  Step the Schedulers
+        # -----------------------
+        scheduler_G.step()
+        scheduler_D_A.step()
+        scheduler_D_B.step()
+        
         # Optionally, save checkpoints every few epochs:
-        if (epoch + 1) % 10 == 0:
+        if (epoch + 1) % 25 == 0:
             torch.save(G_AB.state_dict(), f'G_AB_epoch_{epoch+1}.pth')
             torch.save(G_BA.state_dict(), f'G_BA_epoch_{epoch+1}.pth')
 
@@ -214,14 +239,9 @@ if __name__ == '__main__':
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     
-    # # Update these paths to your directories containing the images.
-    # dataset_A = ImageDataset(root_A="dataset/typed", root_B="dataset/handwritten", transform=transform)
-    # # For simplicity, using the same dataset for both domains.
-    # # In practice, these should point to your typed and handwritten image directories respectively.
-    # dataset_B = dataset_A
     dataset = ImageDataset(root_A="dataset/typed", root_B="dataset/handwritten", transform=transform)
-    dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
 
 
     
-    train_cycle_gan(dataset, dataset, num_epochs=100, batch_size=4)
+    train_cycle_gan(dataset, dataset, num_epochs=300, batch_size=1)

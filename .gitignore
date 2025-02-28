@@ -2,3 +2,4 @@ DevanagariHandwrittenCharacterDataset/
 oldNepaliDataProcessed/
 dataset/
 paper_texture/
+*.pth
