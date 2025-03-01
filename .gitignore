@@ -3,3 +3,4 @@ oldNepaliDataProcessed/
 dataset/
 paper_texture/
 *.pth
+checkpoints_*/
