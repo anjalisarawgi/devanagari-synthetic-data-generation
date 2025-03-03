@@ -3,10 +3,10 @@ import json
 from PIL import Image
 import cv2
 
-IMAGE_DIR = "data/processed_IIT_HW_Hindi_v1/filtered/images/"
-LABELS_JSON = "data/processed_IIT_HW_Hindi_v1/filtered/labels.json"
-COMBINED_IMAGE_DIR = "data/processed_IIT_HW_Hindi_v1/filtered/combined/images/"
-COMBINED_LABELS_JSON = "data/processed_IIT_HW_Hindi_v1/filtered/combined/labels.json"
+IMAGE_DIR = "data/processed_IIT_HW_Hindi_v1/filtered_4/images/"
+LABELS_JSON = "data/processed_IIT_HW_Hindi_v1/filtered_4/labels.json"
+COMBINED_IMAGE_DIR = "data/processed_IIT_HW_Hindi_v1/filtered_4/combined/images/"
+COMBINED_LABELS_JSON = "data/processed_IIT_HW_Hindi_v1/filtered_4/combined/labels.json"
 
 def remove_white_gaps(image_path):
     """Removes white gaps in an image using inpainting."""

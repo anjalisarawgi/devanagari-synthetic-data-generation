@@ -5,10 +5,10 @@ import glob
 import os
 import json
 
-input_dir = "data/processed_IIT_HW_Hindi_v1/filtered/combined/images/"
-output_dir = "data/processed_IIT_HW_Hindi_v1/filtered/combined/processed/images/"
-labels_file = "data/processed_IIT_HW_Hindi_v1/filtered/combined/labels.json"
-labels_output_dir =  "data/processed_IIT_HW_Hindi_v1/filtered/combined/processed/"
+input_dir = "data/processed_IIT_HW_Hindi_v1/filtered_4/combined/images/"
+output_dir = "data/processed_IIT_HW_Hindi_v1/filtered_4/combined/processed/images/"
+labels_file = "data/processed_IIT_HW_Hindi_v1/filtered_4/combined/labels.json"
+labels_output_dir =  "data/processed_IIT_HW_Hindi_v1/filtered_4/combined/processed/"
 
 with open(labels_file, "r", encoding="utf-8") as f:
     labels = json.load(f)

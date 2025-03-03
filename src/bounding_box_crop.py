@@ -4,7 +4,7 @@ import os
 import json
 
 BASE_DIR = "data/IIT_HW_Hindi_v1/"
-LABELS_JSON = "data/processed_IIT_HW_Hindi_v1/filtered/labels.json"
+LABELS_JSON = "data/processed_IIT_HW_Hindi_v1/filtered_4/labels.json"
 
 
 def draw_text_bounding_box(image_path, output_path, padding=15):
@@ -59,8 +59,8 @@ def draw_text_bounding_box(image_path, output_path, padding=15):
 
 ##############
 
-input_file = "data/processed_IIT_HW_Hindi_v1/filtered/filtered_sorted_train.txt"
-output_folder = "data/processed_IIT_HW_Hindi_v1/filtered/images/"
+input_file = "data/processed_IIT_HW_Hindi_v1/filtered_4/filtered_sorted_train.txt"
+output_folder = "data/processed_IIT_HW_Hindi_v1/filtered_4/images/"
 
 with open(input_file, "r", encoding="utf-8") as f:
     lines = f.readlines()
